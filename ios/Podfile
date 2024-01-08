@@ -43,6 +43,28 @@ target 'RNLPCT' do
     inherit! :complete
     # Pods for testing
   end
+  
+  dynamic_frameworks = ['Leanplum-iOS-SDK']
+      pre_install do |installer|
+        Pod::Installer::Xcode::TargetValidator.send(:define_method, :verify_no_static_framework_transitive_dependencies) {}
+        installer.pod_targets.each do |pod|
+            if dynamic_frameworks.include?(pod.name)
+              puts "Setting dynamic linking for #{pod.name}"
+              def pod.build_type;
+                Pod::BuildType.dynamic_framework
+              end
+            end
+          end
+      end
+post_integrate do |installer|
+    begin
+      expo_patch_react_imports!(installer)
+    rescue => e
+      Pod::UI.warn e
+    end
+  end
+  
+  
 
   post_install do |installer|
     # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
